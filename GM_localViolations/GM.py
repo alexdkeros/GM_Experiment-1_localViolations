@@ -29,18 +29,26 @@ class GM:
         self.nodes=[]
         for i in range(Config.nodeNum):
             self.nodes.append(Node(event,uuid.uuid4()))
-        self.nodes.insert(0,Coordinator(event,self.nodes))
+        self.nodes.insert(0,Coordinator(event,len(self.nodes)))
         self.coord=self.nodes[0]
+        
+        #DBG
+        print('nodes initialized')
         
         #creating star graph, coordinator is node[0]
         self.graph=networkx.Graph()
         self.graph.add_star(self.nodes)
-    
-    def start(self):
-        signal('start').send()
+        
+        #DBG
+        print('graph created')
+        print('starting threads')
+        
+        for n in self.nodes:
+            n.start()
         
         
         
         
 if __name__=="__main__":
-    GM().start()
+    print('------------------Starting experiment---------------')
+    gm=GM()

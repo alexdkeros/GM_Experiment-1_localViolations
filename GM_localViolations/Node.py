@@ -44,6 +44,9 @@ class Node(threading.Thread):
         signal('adj-slk').connect(self.adjSlk)
         signal('new-est').connect(self.newEst)
         signal('global-violation').connect(self.globalViolation)
+        
+        #DBG
+        print('node %s created'%self.id)
        
        
         
@@ -54,6 +57,9 @@ class Node(threading.Thread):
         '''
         "init" signal handler
         '''
+        #DBG
+        print('init signal received at node %s'%self.id)
+        
         signal('init-node').send(self.id,v=self.vLast,w=self.weight)
         
     def req(self,sender,**kargs):
@@ -61,19 +67,28 @@ class Node(threading.Thread):
         req signal handler
         '''
         if kargs['nodeId']==self.id:
+            #DBG
+            print('req signal received at node %s'%self.id)
+            
             signal('rep').send(self.id,v=self.vLast,u=self.u)
         
     def adjSlk(self,sender,**kargs):
         '''
         adj-slk signal handler
         '''
-        if kargs['nodeId']==self.id:
+        if kargs['nodeId']==self.id:            
+            #DBG
+            print('adjSlk signal received at node %s, dDelta: %0.2f'%(self.id,kargs['dDelta']))
+        
             self.delta+=kargs['dDelta']
     
     def newEst(self,sender,**kargs):
         '''
         new-est signal handler
         '''
+        #DBG
+        print('new-est signal received at node %s'%self.id)
+        
         self.e=kargs['newE']
         self.v=self.u
         self.delta=0
@@ -82,6 +97,9 @@ class Node(threading.Thread):
         '''
         global-violation signal handler
         '''
+        #DBG
+        print('global-violation signal received at node %s'%self.id)
+        
         self.runFlag=False
     
     
@@ -101,8 +119,15 @@ class Node(threading.Thread):
             self.v=self.inputGenerator.next()
             self.u=self.e+(self.v-self.vLast)+(self.delta/self.weight)
             
+            #DBG
+            print('node %s running, data is v=%0.2f, u=%0.2f'%(self.id,self.v,self.u))
+            
             #monochromaticity check
             if self.u>=self.thresh:
+                
+                #DBG
+                print('local violation at node %s, u=%0.2f'%(self.id,self.u))
+                
                 self.vLast=self.v
                 signal('rep').send(self.id,v=self.vLast,u=self.u)
                 #at rep signal coordinator issues event.clear(), so we wait

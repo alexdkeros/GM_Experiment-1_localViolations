@@ -2,6 +2,7 @@
 @author: ak
 '''
 import threading
+import time
 import random
 from blinker import signal
 from GM_localViolations.Node import Node
@@ -39,9 +40,11 @@ class Coordinator:
         self.counter=0
         
         #signal configuration
-        signal('start').connect(self.start)
         signal('init-node').connect(self.init)
         signal('rep').connect(self.nodeRep)
+        
+        #experimental results
+        self.expCounter=0
         
     
     '''
@@ -52,13 +55,17 @@ class Coordinator:
         initialising global data
         '''
         self.counter+=1
+        #DBG
+        print('coord:init signal received by node %s, counter is %d, nodeNum is %d'%(nodeId,self.counter, self.nodeNum))
         
         #populating network dictionary
         self.nodes[nodeId]=kargs['w']
         self.v+=(kargs['w']*kargs['v'])/sum(self.nodes.values())
         self.e=self.v
         #when all data collected, new-est signal
-        if self.counter==len(self.nodes):
+        if self.counter==self.nodeNum:
+            #DBG
+            print('coord: send new estimate')
             signal('new-est').send(newE=self.e)
             
     def nodeRep(self, nodeId, **kargs):
@@ -66,8 +73,14 @@ class Coordinator:
         new local violation occured
         data tuple is (nodeId, v, u)
         '''
+        #DBG
+        print('coord:rep signal received by node %s'%nodeId)
+        
         #pause thread execution
         self.event.clear()
+        
+        #DBG
+        #time.sleep(0.5)
 
         #add node to balancing set
         self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
@@ -81,34 +94,67 @@ class Coordinator:
         self.b=self.b/sw
         
         if self.b>=self.thresh:
+            
+            #DBG
+            print('coord:balancing,b=%0.2f, balancing set has %d nodes'%(self.b,len(self.balancingSet)))
+            
             #pick node to balance at random
             diffSet=set(self.nodes)-self.balancingNodeIdSet
+            
+            #DBG
+            print('coord:number of remaining nodes available to balance is %d'%len(diffSet))
+            
             if len(diffSet):
-                signal('req').send(nodeId=random.sample(diffSet,1))
+                nodeIdProbe=random.sample(diffSet,1)[0]
+                
+                #DBG
+                print('coord:requesting node %s from:'%nodeIdProbe)
+                print(diffSet)
+                
+                signal('req').send(nodeId=nodeIdProbe)
             else:
+                #DBG
+                print('coord:GLOBAL VIOLATION, counter showed %d lvs'%self.expCounter)
+                
                 signal('global-violation').send()
+                self.event.set()
         else:
+            #DBG
+            print('coord:balance success, b=%0.2f'%self.b)
+            
             #successful balance
             for s in self.balancingSet:
                 dDelta=(self.nodes[s[0]]*self.b)-(self.nodes[s[0]]*s[2])
                 signal('adj-slk').send(nodeId=s[0],dDelta=dDelta)
             
+            #EXP
+            self.expCounter+=1
+            
             #empty balancing set
             self.balancingSet.clear()
             self.balancingNodeIdSet.clear()
             self.b=0
+            
+           
+            
             #resume
             self.event.set()    
                 
                 
-    def start(self,sender):
+    def start(self):
         '''
         starting execution
         '''
+        #DBG
+        print('coord:coord started')
+        
         self.event.clear()
         signal('init').send()
         #start
         self.event.set()
+        
+        #DBG
+        print('coord:node execution started')
         
         
         

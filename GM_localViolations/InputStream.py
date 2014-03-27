@@ -12,7 +12,7 @@ class InputStream:
     configuration via Config module
     '''
 
-    def __init__(self,status='static',initXData=0, mean=0.1, std=1, interval=1):
+    def __init__(self,status='static',initXData=0, mean=0.5, std=1, interval=1):
         '''
         Constructor
         args:
@@ -42,7 +42,6 @@ class InputStream:
         while 1:
             if self.status=="random":
                 self.velocity=norm.rvs(self.mean,self.std)
-            print("velocity is %f"%(self.velocity))
             for i in range(self.interval):
                 yield xData
                 xData=xData+self.velocity
