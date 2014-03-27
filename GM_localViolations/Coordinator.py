@@ -25,6 +25,7 @@ class Coordinator:
         '''
         #thread configuration-synchronization
         self.event=event
+        self.lock=threading.Lock()
         
         #coordinator data initialization
         self.nodeNum=nodeNum    #network node number
@@ -81,21 +82,21 @@ class Coordinator:
         
         #DBG
         #time.sleep(4)
-
-        #add node to balancing set
-        self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
-        self.balancingNodeIdSet.add(nodeId)
-        
-        assert len(self.balancingNodeIdSet)==len(self.balancingSet)
-        
-        #balancing vector computation
-        sw=0
-        b=0
-        for s in self.balancingSet.copy():
-            b+=self.nodes[s[0]]*s[2]   #Sum(w_i*u_i)
-            sw+=self.nodes[s[0]]    #Sum(w_i)
-        if sw:
-            b=b/sw
+        with self.lock:
+            #add node to balancing set
+            self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
+            self.balancingNodeIdSet.add(nodeId)
+            
+            assert len(self.balancingNodeIdSet)==len(self.balancingSet)
+            
+            #balancing vector computation
+            sw=0
+            b=0
+            for s in self.balancingSet:
+                b+=self.nodes[s[0]]*s[2]   #Sum(w_i*u_i)
+                sw+=self.nodes[s[0]]    #Sum(w_i)
+            if sw:
+                b=b/sw
 
         if b>=self.thresh:
             
@@ -118,6 +119,7 @@ class Coordinator:
                 print('coord:GLOBAL VIOLATION, counter showed %d previous lvs, sender %s'%(self.expCounter,nodeId))
                 
                 signal('global-violation').send()
+                time.sleep(1)
                 self.event.set()
         else:
             #DBG
@@ -135,8 +137,7 @@ class Coordinator:
             self.balancingSet.clear()
             self.balancingNodeIdSet.clear()
             
-           
-            
+
             #resume
             self.event.set()    
                 

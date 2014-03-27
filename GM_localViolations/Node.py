@@ -100,7 +100,7 @@ class Node(threading.Thread):
         global-violation signal handler
         '''
         #DBG
-        #print('global-violation signal received at node %s'%self.id)
+        print('global-violation signal received at node %s'%self.id)
         self.runFlag=False
 
     
@@ -115,11 +115,17 @@ class Node(threading.Thread):
 
             #thread synchronization
             self.event.wait()
+            
+            #DBG
+            time.sleep(0.5)
+
+            #DBG
+            print('runflag is %r'%self.runFlag)
+            
             if not self.runFlag:
                 break
             
             #DBG
-            time.sleep(0.5)
             #print('\n node %s is running, u=%0.2f , event is %r'%(self.id,self.u,self.event.is_set()))
             
             #normal operation
