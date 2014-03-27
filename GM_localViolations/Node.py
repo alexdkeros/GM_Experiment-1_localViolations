@@ -98,7 +98,7 @@ class Node(threading.Thread):
         global-violation signal handler
         '''
         #DBG
-        print('global-violation signal received at node %s'%self.id)
+        #print('global-violation signal received at node %s'%self.id)
         
         self.runFlag=False
     

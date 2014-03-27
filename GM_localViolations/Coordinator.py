@@ -80,7 +80,7 @@ class Coordinator:
         self.event.clear()
         
         #DBG
-        #time.sleep(0.5)
+        time.sleep(1)
 
         #add node to balancing set
         self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
@@ -88,11 +88,11 @@ class Coordinator:
         
         #balancing vector computation
         sw=0
-        for s in self.balancingSet:
+        for s in self.balancingSet.copy():
             self.b+=self.nodes[s[0]]*s[2]   #Sum(w_i*u_i)
             sw+=self.nodes[s[0]]    #Sum(w_i)
         self.b=self.b/sw
-        
+
         if self.b>=self.thresh:
             
             #DBG
@@ -123,7 +123,7 @@ class Coordinator:
             print('coord:balance success, b=%0.2f'%self.b)
             
             #successful balance
-            for s in self.balancingSet:
+            for s in self.balancingSet.copy():
                 dDelta=(self.nodes[s[0]]*self.b)-(self.nodes[s[0]]*s[2])
                 signal('adj-slk').send(nodeId=s[0],dDelta=dDelta)
             
