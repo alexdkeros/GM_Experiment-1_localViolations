@@ -112,21 +112,22 @@ class Node(threading.Thread):
         main node execution
         '''
         while self.runFlag:
-            #DBG
-            print('node %s is running, u=%0.2f , event is %r'%(self.id,self.u,self.event.is_set()))
-            time.sleep(1)
 
             #thread synchronization
             self.event.wait()
             if not self.runFlag:
                 break
             
+            #DBG
+            time.sleep(0.5)
+            print('\n node %s is running, u=%0.2f , event is %r'%(self.id,self.u,self.event.is_set()))
+            
             #normal operation
             self.v=self.inputGenerator.next()
             self.u=self.e+(self.v-self.vLast)+(self.delta/self.weight)
             
             #DBG
-            #print('node %s running, data is v=%0.2f, u=%0.2f'%(self.id,self.v,self.u))
+            print('\n node %s running, data is v=%0.2f, u=%0.2f'%(self.id,self.v,self.u))
             
             #monochromaticity check
             if self.u>=self.thresh:

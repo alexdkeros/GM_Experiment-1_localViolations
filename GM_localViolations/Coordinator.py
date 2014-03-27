@@ -80,7 +80,7 @@ class Coordinator:
         self.event.clear()
         
         #DBG
-        time.sleep(4)
+        #time.sleep(4)
 
         #add node to balancing set
         self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
