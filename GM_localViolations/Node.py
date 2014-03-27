@@ -14,7 +14,7 @@ class Node(threading.Thread):
     configuration via Config module
     '''
 
-    def __init__(self, event, weight=1, initialV=0):
+    def __init__(self, event, nodeId, weight=1, initialV=0):
         '''
         Constructor
         args:
@@ -28,6 +28,7 @@ class Node(threading.Thread):
         self.runFlag=True
 
         #node data initialization
+        self.id=nodeId
         self.inputGenerator=InputStream().getData() #data generator
         self.thresh=Config.threshold    #monitoring threshold
         self.weight=weight  #node weight
@@ -49,34 +50,35 @@ class Node(threading.Thread):
     '''
     signal handlers
     '''
-    def init(self):
+    def init(self,sender):
         '''
         "init" signal handler
         '''
-        signal('rep').send(self,{'v':self.vLast,'u':self.u})
+        signal('init-node').send(self.id,v=self.vLast,w=self.weight)
         
-    def req(self):
+    def req(self,sender,**kargs):
         '''
         req signal handler
         '''
-        signal('rep').send(self,{'v':self.vLast,'u':self.u})
+        if kargs['nodeId']==self.id:
+            signal('rep').send(self.id,v=self.vLast,u=self.u)
         
-    def adjSlk(self, receiver, dDelta):
+    def adjSlk(self,sender,**kargs):
         '''
         adj-slk signal handler
         '''
-        if receiver==self:
-            self.delta+=dDelta
+        if kargs['nodeId']==self.id:
+            self.delta+=kargs['dDelta']
     
-    def newEst(self,newE):
+    def newEst(self,sender,**kargs):
         '''
         new-est signal handler
         '''
-        self.e=newE
+        self.e=kargs['newE']
         self.v=self.u
         self.delta=0
         
-    def globalViolation(self):
+    def globalViolation(self,sender):
         '''
         global-violation signal handler
         '''
@@ -102,7 +104,7 @@ class Node(threading.Thread):
             #monochromaticity check
             if self.u>=self.thresh:
                 self.vLast=self.v
-                signal('rep').send(self,{'v':self.vLast,'u':self.u})
+                signal('rep').send(self.id,v=self.vLast,u=self.u)
                 #at rep signal coordinator issues event.clear(), so we wait
             
         

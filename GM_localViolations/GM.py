@@ -3,8 +3,9 @@
 @author: ak
 '''
 import networkx
-import blinker
 import threading
+import uuid
+from blinker import signal
 from GM_localViolations.Coordinator import Coordinator
 from GM_localViolations.Node import Node
 from GM_localViolations import Config
@@ -27,15 +28,19 @@ class GM:
         #creating nodes and coordinator
         self.nodes=[]
         for i in range(Config.nodeNum):
-            self.nodes.append(Node(event))
+            self.nodes.append(Node(event,uuid.uuid4()))
         self.nodes.insert(0,Coordinator(event,self.nodes))
         self.coord=self.nodes[0]
         
         #creating star graph, coordinator is node[0]
         self.graph=networkx.Graph()
         self.graph.add_star(self.nodes)
+    
+    def start(self):
+        signal('start').send()
+        
         
         
         
 if __name__=="__main__":
-    GM()
+    GM().start()
