@@ -118,7 +118,8 @@ class Node(threading.Thread):
 
             #thread synchronization
             self.event.wait()
-    
+            if not self.runFlag:
+                break
             
             #normal operation
             self.v=self.inputGenerator.next()
