@@ -120,10 +120,11 @@ class Node(threading.Thread):
             
             #DBG
             time.sleep(0.5)
-            print('\n node %s is running, u=%0.2f , event is %r'%(self.id,self.u,self.event.is_set()))
+            #print('\n node %s is running, u=%0.2f , event is %r'%(self.id,self.u,self.event.is_set()))
             
             #normal operation
             self.v=self.inputGenerator.next()
+            #can place wait here
             self.u=self.e+(self.v-self.vLast)+(self.delta/self.weight)
             
             #DBG

@@ -86,6 +86,8 @@ class Coordinator:
         self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
         self.balancingNodeIdSet.add(nodeId)
         
+        assert len(self.balancingNodeIdSet)==len(self.balancingSet)
+        
         #balancing vector computation
         sw=0
         b=0
