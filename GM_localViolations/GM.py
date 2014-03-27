@@ -46,7 +46,8 @@ class GM:
         for n in self.nodes:
             n.start()
         
-        
+        for n in self.nodes:
+            n.join()
         
         
 if __name__=="__main__":

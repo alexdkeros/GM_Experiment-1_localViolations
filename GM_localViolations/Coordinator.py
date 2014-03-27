@@ -34,7 +34,7 @@ class Coordinator:
         self.e=0    #estimate vector
         self.balancingSet=set() #balancing set (set of tuples) (nodeId,v_value,u_value})
         self.balancingNodeIdSet=set() #balancing set containing only nodeIds
-        self.b=0    #balancing vector
+        self.balancingFlag=False    #balancing flag
         
         #helper
         self.counter=0
@@ -74,13 +74,13 @@ class Coordinator:
         data tuple is (nodeId, v, u)
         '''
         #DBG
-        print('coord:rep signal received by node %s'%nodeId)
+        print('coord:rep signal received by node %s, u=%0.2f'%(nodeId,kargs['u']))
         
         #pause thread execution
         self.event.clear()
         
         #DBG
-        time.sleep(1)
+        time.sleep(4)
 
         #add node to balancing set
         self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
@@ -88,22 +88,20 @@ class Coordinator:
         
         #balancing vector computation
         sw=0
+        b=0
         for s in self.balancingSet.copy():
-            self.b+=self.nodes[s[0]]*s[2]   #Sum(w_i*u_i)
+            b+=self.nodes[s[0]]*s[2]   #Sum(w_i*u_i)
             sw+=self.nodes[s[0]]    #Sum(w_i)
         if sw:
-            self.b=self.b/sw
+            b=b/sw
 
-        if self.b>=self.thresh:
-            
-            #DBG
-            #print('coord:balancing,b=%0.2f, balancing set has %d nodes'%(self.b,len(self.balancingNodeIdSet)))
+        if b>=self.thresh:
             
             #pick node to balance at random
             diffSet=set(self.nodes)-self.balancingNodeIdSet
             
             #DBG
-            print('coord:number of remaining nodes available to balance is %d'%len(diffSet))
+            print('coord:number of remaining nodes available to balance is %d, b=%0.2f'%(len(diffSet),b))
             
             if len(diffSet):
                 nodeIdProbe=random.sample(diffSet,1)[0]
@@ -115,17 +113,17 @@ class Coordinator:
                 signal('req').send(nodeId=nodeIdProbe)
             else:
                 #DBG
-                print('coord:GLOBAL VIOLATION, counter showed %d lvs'%self.expCounter)
+                print('coord:GLOBAL VIOLATION, counter showed %d previous lvs, sender %s'%(self.expCounter,nodeId))
                 
                 signal('global-violation').send()
                 self.event.set()
         else:
             #DBG
-            print('coord:balance success, b=%0.2f'%self.b)
+            print('coord:balance success, b=%0.2f'%b)
             
             #successful balance
             for s in self.balancingSet.copy():
-                dDelta=(self.nodes[s[0]]*self.b)-(self.nodes[s[0]]*s[2])
+                dDelta=(self.nodes[s[0]]*b)-(self.nodes[s[0]]*s[2])
                 signal('adj-slk').send(nodeId=s[0],dDelta=dDelta)
             
             #EXP
@@ -134,7 +132,6 @@ class Coordinator:
             #empty balancing set
             self.balancingSet.clear()
             self.balancingNodeIdSet.clear()
-            self.b=0
             
            
             
@@ -156,6 +153,9 @@ class Coordinator:
         
         #DBG
         print('coord:node execution started')
+        
+    def join(self):
+        pass
         
         
         

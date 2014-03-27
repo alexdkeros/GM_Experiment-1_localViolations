@@ -3,6 +3,7 @@
 '''
 import threading
 import sys
+import time
 from blinker import signal
 from GM_localViolations.InputStream import InputStream
 from GM_localViolations import Config
@@ -79,7 +80,7 @@ class Node(threading.Thread):
         '''
         if kargs['nodeId']==self.id:            
             #DBG
-            #print('adjSlk signal received at node %s, dDelta: %0.2f'%(self.id,kargs['dDelta']))
+            print('adjSlk signal received at node %s, dDelta: %0.2f'%(self.id,kargs['dDelta']))
         
             self.delta+=kargs['dDelta']
     
@@ -101,7 +102,6 @@ class Node(threading.Thread):
         #DBG
         #print('global-violation signal received at node %s'%self.id)
         self.runFlag=False
-        sys.exit()
 
     
     '''
@@ -112,9 +112,13 @@ class Node(threading.Thread):
         main node execution
         '''
         while self.runFlag:
-            
+            #DBG
+            print('node %s is running, u=%0.2f , event is %r'%(self.id,self.u,self.event.is_set()))
+            time.sleep(1)
+
             #thread synchronization
             self.event.wait()
+    
             
             #normal operation
             self.v=self.inputGenerator.next()
@@ -126,12 +130,17 @@ class Node(threading.Thread):
             #monochromaticity check
             if self.u>=self.thresh:
                 
+                #XXX not sure
+                #thread synchronization
+                #self.event.wait()
+            
                 #DBG
-                print('local violation at node %s, u=%0.2f'%(self.id,self.u))
+                print('----local violation at node %s, u=%0.2f'%(self.id,self.u))
                 
                 self.vLast=self.v
                 signal('rep').send(self.id,v=self.vLast,u=self.u)
                 #at rep signal coordinator issues event.clear(), so we wait
+        
             
         
         
