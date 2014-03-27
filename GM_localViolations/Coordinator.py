@@ -91,12 +91,13 @@ class Coordinator:
         for s in self.balancingSet.copy():
             self.b+=self.nodes[s[0]]*s[2]   #Sum(w_i*u_i)
             sw+=self.nodes[s[0]]    #Sum(w_i)
-        self.b=self.b/sw
+        if sw:
+            self.b=self.b/sw
 
         if self.b>=self.thresh:
             
             #DBG
-            print('coord:balancing,b=%0.2f, balancing set has %d nodes'%(self.b,len(self.balancingSet)))
+            #print('coord:balancing,b=%0.2f, balancing set has %d nodes'%(self.b,len(self.balancingNodeIdSet)))
             
             #pick node to balance at random
             diffSet=set(self.nodes)-self.balancingNodeIdSet
@@ -108,8 +109,8 @@ class Coordinator:
                 nodeIdProbe=random.sample(diffSet,1)[0]
                 
                 #DBG
-                print('coord:requesting node %s from:'%nodeIdProbe)
-                print(diffSet)
+                #print('coord:requesting node %s from:'%nodeIdProbe)
+                #print(diffSet)
                 
                 signal('req').send(nodeId=nodeIdProbe)
             else:

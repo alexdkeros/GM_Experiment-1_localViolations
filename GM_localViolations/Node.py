@@ -2,6 +2,7 @@
 @author: ak
 '''
 import threading
+import sys
 from blinker import signal
 from GM_localViolations.InputStream import InputStream
 from GM_localViolations import Config
@@ -58,7 +59,7 @@ class Node(threading.Thread):
         "init" signal handler
         '''
         #DBG
-        print('init signal received at node %s'%self.id)
+        #print('init signal received at node %s'%self.id)
         
         signal('init-node').send(self.id,v=self.vLast,w=self.weight)
         
@@ -68,7 +69,7 @@ class Node(threading.Thread):
         '''
         if kargs['nodeId']==self.id:
             #DBG
-            print('req signal received at node %s'%self.id)
+            #print('req signal received at node %s'%self.id)
             
             signal('rep').send(self.id,v=self.vLast,u=self.u)
         
@@ -78,7 +79,7 @@ class Node(threading.Thread):
         '''
         if kargs['nodeId']==self.id:            
             #DBG
-            print('adjSlk signal received at node %s, dDelta: %0.2f'%(self.id,kargs['dDelta']))
+            #print('adjSlk signal received at node %s, dDelta: %0.2f'%(self.id,kargs['dDelta']))
         
             self.delta+=kargs['dDelta']
     
@@ -87,7 +88,7 @@ class Node(threading.Thread):
         new-est signal handler
         '''
         #DBG
-        print('new-est signal received at node %s'%self.id)
+        #print('new-est signal received at node %s'%self.id)
         
         self.e=kargs['newE']
         self.v=self.u
@@ -99,9 +100,9 @@ class Node(threading.Thread):
         '''
         #DBG
         #print('global-violation signal received at node %s'%self.id)
-        
         self.runFlag=False
-    
+        sys.exit()
+
     
     '''
     monitoring operation
@@ -120,7 +121,7 @@ class Node(threading.Thread):
             self.u=self.e+(self.v-self.vLast)+(self.delta/self.weight)
             
             #DBG
-            print('node %s running, data is v=%0.2f, u=%0.2f'%(self.id,self.v,self.u))
+            #print('node %s running, data is v=%0.2f, u=%0.2f'%(self.id,self.v,self.u))
             
             #monochromaticity check
             if self.u>=self.thresh:
