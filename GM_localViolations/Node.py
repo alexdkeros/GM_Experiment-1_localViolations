@@ -117,12 +117,14 @@ class Node(threading.Thread):
             self.event.wait()
             
             #DBG
-            time.sleep(0.5)
+            #time.sleep(0.5)
 
             #DBG
-            print('runflag is %r'%self.runFlag)
+            print('\n runflag is %r at node %s'%(self.runFlag,self.id))
             
             if not self.runFlag:
+                #DBG
+                print('breaking')
                 break
             
             #DBG

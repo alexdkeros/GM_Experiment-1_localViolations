@@ -72,8 +72,10 @@ class Coordinator:
     def nodeRep(self, nodeId, **kargs):
         '''
         new local violation occured
-        data tuple is (nodeId, v, u)
         '''
+        #XXX maybe with lock: blah
+        self.lock.acquire()
+        
         #DBG
         print('coord:rep signal received by node %s, u=%0.2f'%(nodeId,kargs['u']))
         
@@ -82,46 +84,26 @@ class Coordinator:
         
         #DBG
         #time.sleep(4)
-        with self.lock:
-            #add node to balancing set
-            self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
-            self.balancingNodeIdSet.add(nodeId)
-            
-            assert len(self.balancingNodeIdSet)==len(self.balancingSet)
-            
-            #balancing vector computation
-            sw=0
-            b=0
-            for s in self.balancingSet:
-                b+=self.nodes[s[0]]*s[2]   #Sum(w_i*u_i)
-                sw+=self.nodes[s[0]]    #Sum(w_i)
-            if sw:
-                b=b/sw
+        
 
-        if b>=self.thresh:
-            
-            #pick node to balance at random
-            diffSet=set(self.nodes)-self.balancingNodeIdSet
-            
-            #DBG
-            print('coord:number of remaining nodes available to balance is %d, b=%0.2f'%(len(diffSet),b))
-            
-            if len(diffSet):
-                nodeIdProbe=random.sample(diffSet,1)[0]
-                
-                #DBG
-                #print('coord:requesting node %s from:'%nodeIdProbe)
-                #print(diffSet)
-                
-                signal('req').send(nodeId=nodeIdProbe)
-            else:
-                #DBG
-                print('coord:GLOBAL VIOLATION, counter showed %d previous lvs, sender %s'%(self.expCounter,nodeId))
-                
-                signal('global-violation').send()
-                time.sleep(1)
-                self.event.set()
-        else:
+        #add node to balancing set
+        self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
+        self.balancingNodeIdSet.add(nodeId)
+        
+        assert len(self.balancingNodeIdSet)==len(self.balancingSet)
+        
+        #balancing vector computation
+        sw=0
+        b=0
+        for s in self.balancingSet:
+            b+=self.nodes[s[0]]*s[2]   #Sum(w_i*u_i)
+            sw+=self.nodes[s[0]]    #Sum(w_i)
+        if sw:
+            b=b/sw
+
+        
+        if b<self.thresh:
+        
             #DBG
             print('coord:balance success, b=%0.2f'%b)
             
@@ -136,10 +118,46 @@ class Coordinator:
             #empty balancing set
             self.balancingSet.clear()
             self.balancingNodeIdSet.clear()
-            
+        
+            #XXX
+            self.lock.release()
 
             #resume
-            self.event.set()    
+            self.event.set()   
+        
+        
+        else:
+            
+            #pick node to balance at random
+            diffSet=set(self.nodes)-self.balancingNodeIdSet
+            
+
+            
+            #DBG
+            print('coord:number of remaining nodes available to balance is %d, b=%0.2f'%(len(diffSet),b))
+            
+            if len(diffSet):
+                nodeIdProbe=random.sample(diffSet,1)[0]
+                
+                #DBG
+                #print('coord:requesting node %s from:'%nodeIdProbe)
+                #print(diffSet)
+                
+                #XXX
+                self.lock.release()
+                
+                signal('req').send(nodeId=nodeIdProbe)
+            else:
+                #DBG
+                print('coord:GLOBAL VIOLATION, counter showed %d previous lvs, sender %s'%(self.expCounter,nodeId))
+                
+                signal('global-violation').send()
+                
+                #XXX
+                self.lock.release()
+                
+                time.sleep(3)
+                self.event.set() 
                 
                 
     def start(self):
