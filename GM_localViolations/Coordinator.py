@@ -73,11 +73,14 @@ class Coordinator:
         '''
         new local violation occured
         '''
-        if bool(self.requestedNode==nodeId) | (not len(self.balancingSet)):
-            #DBG
-            print('coord:node %s before lock'%nodeId)
-            #XXX
-            gotIt=self.lock.acquire()
+       
+        #DBG
+        print('coord:node %s before lock'%nodeId)
+        #XXX
+        gotIt=self.lock.acquire()
+        
+        if (not len(self.balancingSet)) | bool(self.requestedNode==nodeId):
+                
             #DBG
             print('coord:node %s got lock:%r'%(nodeId,gotIt))
             
@@ -151,11 +154,12 @@ class Coordinator:
                     
                     #DBG
                     print('coord:requesting node %s'%self.requestedNode)
+    
                     
                     #XXX
                     self.lock.release()
                     
-                    signal('req').send(nodeId=self.requestedNode)
+                    signal('req').send(reqNodeId=self.requestedNode)
                 else:
                     #DBG
                     print('coord:GLOBAL VIOLATION, counter showed %d previous lvs, sender %s'%(self.expCounter,nodeId))
@@ -167,7 +171,12 @@ class Coordinator:
                     
                     time.sleep(3)
                     self.event.set() 
-                
+        else:
+            #go back in line
+            print('coord: node %s redirected to the back.'%nodeId)
+            self.lock.release()
+            signal('req').send(reqNodeId=nodeId)
+            
                 
     def start(self):
         '''

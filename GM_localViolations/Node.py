@@ -68,7 +68,7 @@ class Node(threading.Thread):
         '''
         req signal handler
         '''
-        if kargs['nodeId']==self.id:
+        if kargs['reqNodeId']==self.id:
             #DBG
             #print('req signal received at node %s'%self.id)
             
