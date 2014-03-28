@@ -12,7 +12,7 @@ class InputStream:
     configuration via Config module
     '''
 
-    def __init__(self,status='static',initXData=0, mean=0.5, std=1, interval=1):
+    def __init__(self,status='static',initXData=0, mean=1, std=0.5, interval=1):
         '''
         Constructor
         args:

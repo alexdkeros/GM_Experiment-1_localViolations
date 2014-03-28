@@ -175,6 +175,7 @@ class Coordinator:
             #go back in line
             print('coord: node %s redirected to the back.'%nodeId)
             self.lock.release()
+            #XXX
             signal('req').send(reqNodeId=nodeId)
             
                 
@@ -193,11 +194,14 @@ class Coordinator:
         #DBG
         print('coord:node execution started')
         
+        
     def join(self):
         pass
-        
-        
-        
-        
-        
     
+    
+    def getLVs(self):
+        '''
+        get local violations
+        '''
+        return self.expCounter
+        

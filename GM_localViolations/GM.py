@@ -2,6 +2,7 @@
 
 @author: ak
 '''
+import sys
 import networkx
 import threading
 import uuid
@@ -41,15 +42,26 @@ class GM:
         
         #DBG
         print('graph created')
-        print('starting threads')
         
+        
+
+        
+    def start(self):
+        print('starting threads')
         for n in self.nodes:
             n.start()
-        
+            
+    def waitThreads(self):
         for n in self.nodes:
             n.join()
+            
+    def getLVs(self):
+        print('------------------LVs:%d----------------------------'%self.coord.getLVs())
         
         
 if __name__=="__main__":
     print('------------------Starting experiment---------------')
     gm=GM()
+    gm.start()
+    gm.waitThreads()
+    gm.getLVs()
