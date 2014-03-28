@@ -1,5 +1,5 @@
 '''
 @author: ak
 '''
-nodeNum=3
+nodeNum=5
 threshold=5

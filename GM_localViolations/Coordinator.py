@@ -35,7 +35,7 @@ class Coordinator:
         self.e=0    #estimate vector
         self.balancingSet=set() #balancing set (set of tuples) (nodeId,v_value,u_value})
         self.balancingNodeIdSet=set() #balancing set containing only nodeIds
-        self.balancingFlag=False    #balancing flag
+        self.requestedNode=None    #requested node flag
         
         #helper
         self.counter=0
@@ -66,98 +66,107 @@ class Coordinator:
         #when all data collected, new-est signal
         if self.counter==self.nodeNum:
             #DBG
-            print('coord: send new estimate')
+            print('coord: send new estimate %0.2f'%self.e)
             signal('new-est').send(newE=self.e)
             
     def nodeRep(self, nodeId, **kargs):
         '''
         new local violation occured
         '''
-        #XXX maybe with lock: blah
-        self.lock.acquire()
-        
-        #DBG
-        print('coord:rep signal received by node %s, u=%0.2f'%(nodeId,kargs['u']))
-        
-        #pause thread execution
-        self.event.clear()
-        
-        #DBG
-        #time.sleep(4)
-        
-
-        #add node to balancing set
-        self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
-        self.balancingNodeIdSet.add(nodeId)
-        
-        assert len(self.balancingNodeIdSet)==len(self.balancingSet)
-        
-        #balancing vector computation
-        sw=0
-        b=0
-        for s in self.balancingSet:
-            b+=self.nodes[s[0]]*s[2]   #Sum(w_i*u_i)
-            sw+=self.nodes[s[0]]    #Sum(w_i)
-        if sw:
-            b=b/sw
-
-        
-        if b<self.thresh:
-        
+        if bool(self.requestedNode==nodeId) | (not len(self.balancingSet)):
             #DBG
-            print('coord:balance success, b=%0.2f'%b)
-            
-            #successful balance
-            for s in self.balancingSet.copy():
-                dDelta=(self.nodes[s[0]]*b)-(self.nodes[s[0]]*s[2])
-                signal('adj-slk').send(nodeId=s[0],dDelta=dDelta)
-            
-            #EXP
-            self.expCounter+=1
-            
-            #empty balancing set
-            self.balancingSet.clear()
-            self.balancingNodeIdSet.clear()
-        
+            print('coord:node %s before lock'%nodeId)
             #XXX
-            self.lock.release()
-
-            #resume
-            self.event.set()   
-        
-        
-        else:
-            
-            #pick node to balance at random
-            diffSet=set(self.nodes)-self.balancingNodeIdSet
-            
-
+            gotIt=self.lock.acquire()
+            #DBG
+            print('coord:node %s got lock:%r'%(nodeId,gotIt))
             
             #DBG
-            print('coord:number of remaining nodes available to balance is %d, b=%0.2f'%(len(diffSet),b))
+            print('coord:rep signal received by node %s, u=%0.2f'%(nodeId,kargs['u']))
             
-            if len(diffSet):
-                nodeIdProbe=random.sample(diffSet,1)[0]
-                
+            #pause thread execution
+            self.event.clear()
+            
+            #DBG
+            #time.sleep(4)
+            
+    
+            #add node to balancing set
+            self.balancingSet.add((nodeId,kargs['v'],kargs['u']))
+            self.balancingNodeIdSet.add(nodeId)
+            
+            #DBG
+            print('##############set data##########################')
+            print(self.balancingSet)
+            print(self.balancingNodeIdSet)
+            assert len(self.balancingNodeIdSet)==len(self.balancingSet)
+            
+            #balancing vector computation
+            sw=0
+            b=0
+            for s in self.balancingSet:
+                b+=self.nodes[s[0]]*s[2]   #Sum(w_i*u_i)
+                sw+=self.nodes[s[0]]    #Sum(w_i)
+            if sw:
+                b=b/sw
+    
+            
+            if b<self.thresh:
+            
                 #DBG
-                #print('coord:requesting node %s from:'%nodeIdProbe)
-                #print(diffSet)
+                print('coord:balance success, b=%0.2f'%b)
                 
+                #successful balance
+                for s in self.balancingSet.copy():
+                    dDelta=(self.nodes[s[0]]*b)-(self.nodes[s[0]]*s[2])
+                    signal('adj-slk').send(nodeId=s[0],dDelta=dDelta)
+                
+                #EXP
+                self.expCounter+=1
+                
+                #empty balancing set
+                self.balancingSet.clear()
+                self.balancingNodeIdSet.clear()
+                self.requestedNode=None
+            
                 #XXX
                 self.lock.release()
-                
-                signal('req').send(nodeId=nodeIdProbe)
+    
+                #resume
+                self.event.set()   
+            
+            
             else:
+                
+                #pick node to balance at random
+                diffSet=set(self.nodes)-self.balancingNodeIdSet
+                
+    
+                
                 #DBG
-                print('coord:GLOBAL VIOLATION, counter showed %d previous lvs, sender %s'%(self.expCounter,nodeId))
+                print('coord:number of remaining nodes available to balance is %d, b=%0.2f'%(len(diffSet),b))
                 
-                signal('global-violation').send()
-                
-                #XXX
-                self.lock.release()
-                
-                time.sleep(3)
-                self.event.set() 
+                if len(diffSet):
+                    self.requestedNode=random.sample(diffSet,1)[0]
+                    
+                    #DBG
+                    print('coord:requesting node %s'%self.requestedNode)
+                    
+                    #XXX
+                    self.lock.release()
+                    
+                    signal('req').send(nodeId=self.requestedNode)
+                else:
+                    #DBG
+                    print('coord:GLOBAL VIOLATION, counter showed %d previous lvs, sender %s'%(self.expCounter,nodeId))
+                    
+                    signal('global-violation').send()
+                    
+                    #XXX
+                    self.lock.release()
+                    
+                    time.sleep(3)
+                    self.event.set() 
                 
                 
     def start(self):

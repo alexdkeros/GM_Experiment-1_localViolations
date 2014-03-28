@@ -120,7 +120,7 @@ class Node(threading.Thread):
             #time.sleep(0.5)
 
             #DBG
-            print('\n runflag is %r at node %s'%(self.runFlag,self.id))
+            #print('\n runflag is %r at node %s'%(self.runFlag,self.id))
             
             if not self.runFlag:
                 #DBG
@@ -136,7 +136,7 @@ class Node(threading.Thread):
             self.u=self.e+(self.v-self.vLast)+(self.delta/self.weight)
             
             #DBG
-            print('\n node %s running, data is v=%0.2f, u=%0.2f'%(self.id,self.v,self.u))
+            #print('\n node %s running, data is v=%0.2f, u=%0.2f'%(self.id,self.v,self.u))
             
             #monochromaticity check
             if self.u>=self.thresh:
