@@ -18,7 +18,7 @@ class GM:
         configuration via Config module
     '''
 
-    def __init__(self):
+    def __init__(self,nodeNum):
         '''
         Constructor
         '''
@@ -28,7 +28,7 @@ class GM:
         
         #creating nodes and coordinator
         self.nodes=[]
-        for i in range(Config.nodeNum):
+        for i in range(nodeNum):
             self.nodes.append(Node(event,uuid.uuid4()))
         self.nodes.insert(0,Coordinator(event,len(self.nodes)))
         self.coord=self.nodes[0]
@@ -57,11 +57,4 @@ class GM:
             
     def getLVs(self):
         print('------------------LVs:%d----------------------------'%self.coord.getLVs())
-        
-        
-if __name__=="__main__":
-    print('------------------Starting experiment---------------')
-    gm=GM()
-    gm.start()
-    gm.waitThreads()
-    gm.getLVs()
+        return self.coord.getLVs()

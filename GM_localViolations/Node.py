@@ -16,7 +16,7 @@ class Node(threading.Thread):
     configuration via Config module
     '''
 
-    def __init__(self, event, nodeId, weight=1, initialV=0):
+    def __init__(self, event, nodeId, weight=1, initialV=Config.defV):
         '''
         Constructor
         args:

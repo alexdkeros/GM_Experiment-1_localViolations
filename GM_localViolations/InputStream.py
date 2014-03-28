@@ -2,6 +2,8 @@
 @author: ak
 '''
 from scipy.stats import norm
+from GM_localViolations import Config
+
 
 
 class InputStream:
@@ -12,7 +14,7 @@ class InputStream:
     configuration via Config module
     '''
 
-    def __init__(self,status='static',initXData=0, mean=1, std=0.5, interval=1):
+    def __init__(self,status=Config.defStatus,initXData=Config.defInitXData, mean=Config.defMean, std=Config.defStd, interval=Config.defInterval):
         '''
         Constructor
         args:
